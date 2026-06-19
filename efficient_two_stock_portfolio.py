@@ -13,104 +13,112 @@ import numpy as np
 import yfinance as yf
 import matplotlib.pyplot as plt
 
-#Reading the website to find the tickers
-tables = pd.read_html('https://en.wikipedia.org/wiki/Nasdaq-100',
-                      storage_options={"User-Agent": "Mozilla/5.0"})
+#For indexes:
+index_map = {
+    'NASDAQ100': ('https://en.wikipedia.org/wiki/Nasdaq-100', 5, 'Ticker'),
+    'SP500': ('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies', 0, 'Symbol'),
+    'FTSE100': ('https://en.wikipedia.org/wiki/FTSE_100', 4, 'Ticker')
+}
 
-for i, table in enumerate(tables):
-    print(i, table.columns.tolist())
+def portfolio_optimiser(user_input):
 
-#Finding the tickers in the index
-tickers = tables[5]['Ticker'].tolist()
-print(tickers)
+    #Parameters
+    time = '2022-01-01'
 
-data = yf.download(tickers)
+    #For indexes
+    if isinstance(user_input, str):
+        url, table_index, ticker_col = index_map[user_input]
+        tables = pd.read_html(url, storage_options={"User-Agent": "Mozilla/5.0"})
+        tickers = tables[table_index][ticker_col].tolist()
+    else:
+        tickers = user_input
 
-#Finding the closing price data for the companies
-close_prices = data['Close']
-returns = close_prices.pct_change().dropna()
+    #Fetching the data for the companies
+    data = yf.download(tickers, start= time)
 
-returns.head()
+    #Finding the closing price data for the companies
+    close_prices = data['Close'].dropna(axis = 1)
+    returns = close_prices.pct_change().dropna()
 
-#Creating the correlation matrix for all the stocks
-correlation_matrix = returns.corr()
-print(correlation_matrix)
+    #Creating the correlation matrix for all the stocks
+    correlation_matrix = returns.corr()
 
-#Removing self-correlations by setting diagonal to NaN
-np.fill_diagonal(correlation_matrix.values, np.nan)
+    #Removing self-correlations by setting diagonal to NaN
+    np.fill_diagonal(correlation_matrix.values, np.nan)
 
-#Finding the pair with lowest correlation
-min_corr = correlation_matrix.stack().idxmin()
-print(min_corr)
+    #Finding the pair with lowest correlation
+    min_corr = correlation_matrix.stack().idxmin()
+    print(min_corr)
+    stock1 = min_corr[0]
+    stock2 = min_corr[1]
 
-#Fetching the data for the two stocks
-pair = yf.download(min_corr)
-pair.head()
+    #Fetching the data for the two stocks
+    pair = yf.download(min_corr)
+    pair.head()
 
-#Getting the closing price data for the stocks
-close_pair = pair['Close']
-pair_returns = close_pair.pct_change().dropna()
-print(pair_returns)
+    #Getting the closing price data for the stocks
+    close_pair = pair['Close']
+    pair_returns = close_pair.pct_change().dropna()
 
-#Fetching the risk free rate as the 10 year Treasury yield
-risk_free = yf.download('^TNX')
-risk_free.head()
-risk_free.iloc[-1]
+    #Fetching the risk free rate as the 10 year Treasury yield
+    risk_free = yf.download('^TNX')
+    risk_free_rate = risk_free['Close'].iloc[-1].item() / 100
+    print(risk_free_rate)
 
-risk_free_rate = risk_free['Close'].iloc[-1] / 100
-print(risk_free_rate)
+    #Finding the average returns, variance and correlation for both the stocks
+    stock1_ret = float(pair_returns[stock1].mean())
+    stock2_ret = float(pair_returns[stock2].mean())
+    print(f"The return of {stock1} is {stock1_ret}")
+    print(f"The return of {stock2} is {stock2_ret}")
+    stock1_var = float(pair_returns[stock1].var())
+    stock2_var = float(pair_returns[stock2].var())
+    print(f"The volatility of {stock1} is {np.sqrt(stock1_var)}")
+    print(f"The volatility of {stock2} is {np.sqrt(stock2_var)}")
+    correlation = float(correlation_matrix.loc[stock1, stock2])
+    print(f"The correlation of {stock1} and {stock2} is {correlation}")
 
-daily_rf = float(risk_free_rate / 252)
-print(daily_rf)
 
-#Finding the average returns, variance and correlation for both the stocks
-avgo_ret = float(pair_returns['AVGO'].mean())
-orly_ret = float(pair_returns['ORLY'].mean())
-print(avgo_ret)
-print(orly_ret)
-avgo_var = float(pair_returns['AVGO'].var())
-orly_var = float(pair_returns['ORLY'].var())
-print(avgo_var)
-print(orly_var)
-correlation = float(correlation_matrix.loc['AVGO', 'ORLY'])
-print(correlation)
+    returns_list = []
+    volatility_list = []
 
-print(type(risk_free_rate))
-print(risk_free_rate)
+    best_sharpe = -np.inf
+    best_weight = 0
 
-returns_list = []
-volatility_list = []
+    #Finding the optimal weighting of the two stocks
+    for w in np.arange(0, 1.01, 0.01):
+        port_return = w*stock1_ret + (1-w)*stock2_ret
+        port_variance = (w**2)*stock1_var + ((1-w)**2)*stock2_var + 2*w*(1-w)*np.sqrt(stock1_var)*np.sqrt(stock2_var)*correlation
+        port_return = float(port_return * 252)
+        port_variance = float(port_variance * 252)
+        port_vol = np.sqrt(port_variance)
+        returns_list.append(port_return)
+        volatility_list.append(port_vol)
+        sharpe = (port_return - risk_free_rate) / port_vol
 
-best_sharpe = -np.inf
-best_weight = 0
+        if sharpe > best_sharpe:
+                best_sharpe = sharpe
+                best_weight = w
 
-#Finding the optimal weighting of the two stocks
-for w in np.arange(0, 1.01, 0.01):
-    port_return = w*avgo_ret + (1-w)*orly_ret
-    port_variance = (w**2)*avgo_var + ((1-w)**2)*orly_var + 2*w*(1-w)*np.sqrt(avgo_var)*np.sqrt(orly_var)*correlation
-    port_return = float(port_return * 252)
-    port_variance = float(port_variance * 252)
-    port_vol = np.sqrt(port_variance)
-    returns_list.append(port_return)
-    volatility_list.append(port_vol)
-    sharpe = (port_return - risk_free_rate) / port_vol
+    print(f"Optimal weight in {stock1}: {best_weight:.2f}")
+    print(f"Optimal weight in {stock2}: {1 - best_weight:.2f}")
+    print(f"Sharpe ratio: {best_sharpe:.4f}")
 
-    if sharpe > best_sharpe:
-        best_sharpe = sharpe
-        best_weight = w
+    #Plotting the efficient frontier
+    plt.figure(figsize=(10, 6))
+    plt.scatter(volatility_list, returns_list, c='blue', marker='o', s=10)
+    plt.scatter(np.sqrt((best_weight**2)*stock1_var*252 + ((1-best_weight)**2)*stock2_var*252 + 2*best_weight*(1-best_weight)*np.sqrt(stock1_var)*np.sqrt(stock2_var)*correlation*252),
+                best_weight*stock1_ret*252 + (1-best_weight)*stock2_ret*252,
+                c='red', marker='x', s=200, label='Optimal portfolio')
+    plt.xlabel('Annual volatility')
+    plt.ylabel('Annual return')
+    plt.title(f'Efficient frontier: {stock1} vs {stock2}')
+    plt.legend()
+    plt.show()
 
-print(f"Optimal weight in AVGO: {best_weight:.2f}")
-print(f"Optimal weight in ORLY: {1 - best_weight:.2f}")
-print(f"Sharpe ratio: {best_sharpe:.4f}")
+portfolio_optimiser('SP500')
 
-#Plotting the efficient frontier
-plt.figure(figsize=(10, 6))
-plt.scatter(volatility_list, returns_list, c='blue', marker='o', s=10)
-plt.scatter(np.sqrt((best_weight**2)*avgo_var*252 + ((1-best_weight)**2)*orly_var*252 + 2*best_weight*(1-best_weight)*np.sqrt(avgo_var)*np.sqrt(orly_var)*correlation*252),
-            best_weight*avgo_ret*252 + (1-best_weight)*orly_ret*252,
-            c='red', marker='x', s=200, label='Optimal portfolio')
-plt.xlabel('Annual volatility')
-plt.ylabel('Annual return')
-plt.title('Efficient frontier: AVGO vs ORLY')
-plt.legend()
-plt.show()
+# Example 2 - Custom list
+portfolio_optimiser(['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META', 'NVDA', 'AMD'])
+
+# Example 3 - AI/chip focused
+portfolio_optimiser(['NVDA', 'AMD', 'AVGO', 'QCOM', 'INTC', 'AMAT', 'MU'])
