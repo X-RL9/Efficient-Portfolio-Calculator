@@ -54,8 +54,8 @@ if run:
         returns = close_prices.pct_change().dropna()
 
         # Correlation matrix
-        correlation_matrix = returns.corr()
-        np.fill_diagonal(correlation_matrix.values, np.nan)
+        correlation_matrix = correlation_matrix.where(
+        ~np.eye(len(correlation_matrix), dtype=bool))
 
         # Find lowest correlation pair
         min_corr = correlation_matrix.stack().idxmin()
