@@ -55,7 +55,8 @@ if run:
 
         # Correlation matrix
         correlation_matrix = correlation_matrix.where(
-        ~np.eye(len(correlation_matrix), dtype=bool))
+        ~np.eye(len(correlation_matrix), dtype=bool)
+        )
 
         # Find lowest correlation pair
         min_corr = correlation_matrix.stack().idxmin()
