@@ -24,7 +24,7 @@ input_type = st.radio("Select input type", ["Index", "Custom tickers"])
 index_map = {
     'NASDAQ100': ('https://en.wikipedia.org/wiki/Nasdaq-100', 5, 'Ticker'),
     'SP500': ('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies', 0, 'Symbol'),
-    'FTSE100': ('https://en.wikipedia.org/wiki/FTSE_100', 4, 'Ticker')
+    'FTSE100': ('https://en.wikipedia.org/wiki/FTSE_100', 3, 'Ticker')
 }
 
 if input_type == "Index":
