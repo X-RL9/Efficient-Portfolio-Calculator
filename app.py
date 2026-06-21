@@ -17,6 +17,7 @@ st.set_page_config(page_title="Efficient Portfolio Calculator", layout="centered
 
 st.title("Efficient Portfolio Calculator")
 st.markdown("Built using Modern Portfolio Theory. Enter an index or a list of tickers to find the optimal two-stock portfolio.")
+st.caption("Made by Robert Luke | GitHub: X-RL9")
 
 # Input section
 input_type = st.radio("Select input type", ["Index", "Custom tickers"])
