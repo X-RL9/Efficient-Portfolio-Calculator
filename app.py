@@ -51,8 +51,11 @@ if run:
                 if col in df.columns:
                     tickers = df[col].tolist()
                     break
-        else:
-            tickers = [t.strip() for t in custom_input.split(",")]
+            else:
+                 st.error(f"Could not find ticker column. Available columns: {df.columns.tolist()}")
+                 st.stop()
+            else:
+                tickers = [t.strip() for t in custom_input.split(",")]
 
         # Download price data
         data = yf.download(tickers, start=str(start_date), end=str(end_date), progress=False)
