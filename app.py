@@ -47,15 +47,16 @@ if run:
             st.write(f"Number of tables found: {len(tables)}")
             df = tables[table_index]
             # Try common ticker column names
+            tickers = None
             for col in [ticker_col, 'Ticker', 'EPIC', 'Symbol', 'Code']:
                 if col in df.columns:
                     tickers = df[col].tolist()
                     break
-            else:
+            if tickers is None:
                  st.error(f"Could not find ticker column. Available columns: {df.columns.tolist()}")
                  st.stop()
-            else:
-                tickers = [t.strip() for t in custom_input.split(",")]
+        else:
+            tickers = [t.strip() for t in custom_input.split(",")]
 
         # Download price data
         data = yf.download(tickers, start=str(start_date), end=str(end_date), progress=False)
