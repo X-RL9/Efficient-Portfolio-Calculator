@@ -24,7 +24,7 @@ input_type = st.radio("Select input type", ["Index", "Custom tickers"])
 index_map = {
     'NASDAQ100': ('https://en.wikipedia.org/wiki/Nasdaq-100', 5, 'Ticker'),
     'SP500': ('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies', 0, 'Symbol'),
-    'FTSE100': ('https://en.wikipedia.org/wiki/FTSE_100', 5, 'Ticker')
+    'FTSE100': ('https://en.wikipedia.org/wiki/FTSE_100', 4, 'Ticker')
 }
 
 if input_type == "Index":
@@ -44,8 +44,8 @@ if run:
         if input_type == "Index":
             url, table_index, ticker_col = index_map[selected_index]
             tables = pd.read_html(url, storage_options={"User-Agent": "Mozilla/5.0"})
+            st.write(f"Number of tables found: {len(tables)}")
             df = tables[table_index]
-            st.write(df.columns.tolist())
             # Try common ticker column names
             for col in [ticker_col, 'Ticker', 'EPIC', 'Symbol', 'Code']:
                 if col in df.columns:
