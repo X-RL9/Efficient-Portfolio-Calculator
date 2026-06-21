@@ -44,7 +44,12 @@ if run:
         if input_type == "Index":
             url, table_index, ticker_col = index_map[selected_index]
             tables = pd.read_html(url, storage_options={"User-Agent": "Mozilla/5.0"})
-            tickers = tables[table_index][ticker_col].tolist()
+            df = tables[table_index]
+            # Try common ticker column names
+            for col in [ticker_col, 'Ticker', 'EPIC', 'Symbol', 'Code']:
+                if col in df.columns:
+                    tickers = df[col].tolist()
+                    break
         else:
             tickers = [t.strip() for t in custom_input.split(",")]
 
