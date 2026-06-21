@@ -45,6 +45,7 @@ if run:
             url, table_index, ticker_col = index_map[selected_index]
             tables = pd.read_html(url, storage_options={"User-Agent": "Mozilla/5.0"})
             df = tables[table_index]
+            st.write(df.columns.tolist())
             # Try common ticker column names
             for col in [ticker_col, 'Ticker', 'EPIC', 'Symbol', 'Code']:
                 if col in df.columns:
