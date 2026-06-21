@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 st.set_page_config(page_title="Efficient Portfolio Calculator", layout="centered")
 
 st.title("Efficient Portfolio Calculator")
-st.markdown("Built using Modern Portfolio Theory. Enter an index or a list of tickers to find the optimal two-stock portfolio.")
+st.markdown("Built using Modern Portfolio Theory (from: Markowitz, H. (1952) 'Portfolio selection', Journal of Finance, 7(1), pp. 77–91) . Enter an index or a list of tickers to find the optimal two-stock portfolio. Disclaimer! This is not financial advice!")
 st.caption("Made by Robert Luke | GitHub: X-RL9")
 
 # Input section
