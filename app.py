@@ -13,7 +13,7 @@ import numpy as np
 import yfinance as yf
 import matplotlib.pyplot as plt
 
-st.set_page_config(page_title="Efficient Portfolio Calculator", layout="centered")
+st.set_page_config(page_title="Efficient Portfolio Calculator",page_icon="📈", layout="centered")
 
 st.title("Efficient Portfolio Calculator")
 st.markdown("Built using Modern Portfolio Theory (from: Markowitz, H. (1952) 'Portfolio selection', Journal of Finance, 7(1), pp. 77–91) . Enter an index or a list of tickers to find the optimal two-stock portfolio.")
